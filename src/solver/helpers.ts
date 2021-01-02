@@ -2,23 +2,24 @@
 // Model types
 // ---------------------------
 
+const SIZE = 9;
+
 export type Digit = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 export type MaybeDigit = Digit | null;
 
 export type Index = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
-export type SArray<T> = [T, T, T, T, T, T, T, T, T];
+export type SArray<T> = readonly [T, T, T, T, T, T, T, T, T];
 
-export const SIZE = 9;
-
-export function createSArray<T>(cb: (index: Index) => T): SArray<T> {
-  const arr = new Array(SIZE) as SArray<T>;
+export function createSArray<T>(factory: (index: Index) => T): SArray<T> {
+  const arr = new Array<T>(SIZE);
 
   for (let i = 0; i < SIZE; i += 1) {
-    arr[i] = cb(i as Index);
+    arr[i] = factory(i as Index);
   }
 
-  return arr;
+  // ts-as: [T, T] !== readonly T[]
+  return (arr as unknown) as SArray<T>;
 }
 
 export enum VectorType {
@@ -39,20 +40,23 @@ export interface CellIds {
   [VectorType.ROW]: Index;
 }
 
-export const POSSIBLE_VALUES = createSArray(i => (i + 1) as Digit);
-
 export function toDigit(index: Index): Digit {
+  // ts-as: nominal types conversion
   return (index + 1) as Digit;
 }
 
 export function toIndex(digit: Digit): Index {
+  // ts-as: nominal types conversion
   return (digit - 1) as Index;
 }
+
+export const POSSIBLE_VALUES = createSArray(i => toDigit(i));
 
 export function toBoxIndex(rowIndex: Index, colIndex: Index): Index {
   const top = rowIndex % 3;
   const left = colIndex % 3;
 
+  // ts-as: nominal types conversion
   return (top * 3 + left) as Index;
 }
 

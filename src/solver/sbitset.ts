@@ -1,11 +1,11 @@
-import { SArray, createSArray, Digit, Index, SIZE } from './helpers';
+import { SArray, createSArray, Digit, toDigit, Index, SIZE } from './helpers';
 
 export class SBitSet {
-  static readonly ALL = (1 << SIZE) - 1;
-  static readonly BITS = createSArray(i => 1 << i);
-  static readonly NEG_BITS = SBitSet.BITS.map(
-    bit => SBitSet.ALL - bit,
-  ) as SArray<number>;
+  static readonly ALL: number = (1 << SIZE) - 1;
+  static readonly BITS: SArray<number> = createSArray(i => 1 << i);
+  static readonly NEG_BITS: SArray<number> = createSArray(
+    i => SBitSet.ALL - (1 << i),
+  );
 
   constructor(public bits: number) {}
 
@@ -25,11 +25,20 @@ export class SBitSet {
     this.bits = 0;
   }
 
+  empty(): boolean {
+    return this.bits === 0;
+  }
+
   cardinality(): number {
+    if (this.empty()) {
+      return 0;
+    }
+
     let result = 0;
 
-    for (let i = 0; i < SIZE; i += 1) {
-      if (this.bits & SBitSet.BITS[i as Index]) {
+    // ts-as: nominal types conversion
+    for (let i: Index = 0; i < SIZE; i = (i + 1) as Index) {
+      if (this.bits & SBitSet.BITS[i]) {
         result += 1;
       }
     }
@@ -38,9 +47,14 @@ export class SBitSet {
   }
 
   lsb(): Index | null {
-    for (let i = 0; i < SIZE; i += 1) {
-      if (this.bits & SBitSet.BITS[i as Index]) {
-        return i as Index;
+    if (this.empty()) {
+      return null;
+    }
+
+    // ts-as: nominal types conversion
+    for (let i: Index = 0; i < SIZE; i = (i + 1) as Index) {
+      if (this.bits & SBitSet.BITS[i]) {
+        return i;
       }
     }
 
@@ -48,11 +62,16 @@ export class SBitSet {
   }
 
   toDigitArray(): Digit[] {
+    if (this.empty()) {
+      return [];
+    }
+
     const result: Digit[] = [];
 
-    for (let i = 0; i < SIZE; i += 1) {
-      if (this.bits & SBitSet.BITS[i as Index]) {
-        result.push((i + 1) as Digit);
+    // ts-as: nominal types conversion
+    for (let i: Index = 0; i < SIZE; i = (i + 1) as Index) {
+      if (this.bits & SBitSet.BITS[i]) {
+        result.push(toDigit(i));
       }
     }
 

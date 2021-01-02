@@ -3,8 +3,8 @@ import {
   Index,
   toDigit,
   toIndex,
-  createSArray,
   SArray,
+  createSArray,
   VectorType,
 } from './helpers';
 import { SBitSet } from './sbitset';
@@ -17,7 +17,7 @@ export class Vector {
   cells!: SArray<Cell>;
 
   constructor(
-    protected solver: Solver,
+    protected readonly solver: Solver,
     public readonly index: Index,
     public readonly type: VectorType,
   ) {}
@@ -26,12 +26,21 @@ export class Vector {
     const changedValue = changedCell.value as Digit;
 
     this.digits[toIndex(changedValue)].clearAll();
-    this.digits.forEach(digitPos => {
+    this.digits.forEach((digitPos, i) => {
+      if (digitPos.empty()) {
+        return;
+      }
+
       digitPos.clear(changedCell.indexes[this.type]);
+
+      if (digitPos.cardinality() === 1) {
+        const index = digitPos.lsb()!;
+        this.cells[index].setValue(toDigit(i as Index));
+      }
     });
 
     this.cells.forEach(cell => {
-      if (cell === changedCell || cell.known) {
+      if (cell === changedCell || cell.known()) {
         return;
       }
 
@@ -46,6 +55,10 @@ export class Vector {
       [cell.box, cell.col, cell.row].forEach(vec => {
         vec.digits[toIndex(changedValue)].clear(cell.indexes[vec.type]);
         vec.digits.forEach((digitPos, i) => {
+          if (digitPos.empty()) {
+            return;
+          }
+
           if (digitPos.cardinality() === 1) {
             const index = digitPos.lsb()!;
 

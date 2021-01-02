@@ -6,10 +6,6 @@ import { Input, createSolverFromInput, SArray, MaybeDigit } from 'solver';
 
 import './styles.css';
 
-// ---------------------------
-// Input example
-// ---------------------------
-
 const _ = null;
 
 const testRows = [
@@ -34,51 +30,11 @@ const solver = ((window as any).solver = createSolverFromInput(testField));
 
 let i = 0;
 
-i = 0;
 while (solver.queue.length !== 0 && i++ < 10000) {
   solver.queue.shift()!();
 }
+
 console.log(i);
-// i = 0;
-// while (solver.queue.length !== 0 && i++ < 10000) {
-//   solver.queue.shift()!();
-// }
-// i = 0;
-// while (solver.queue.length !== 0 && i++ < 10000) {
-//   solver.queue.shift()!();
-// }
-// i = 0;
-// while (solver.queue.length !== 0 && i++ < 10000) {
-//   solver.queue.shift()!();
-// }
-// i = 0;
-// while (solver.queue.length !== 0 && i++ < 10000) {
-//   solver.queue.shift()!();
-// }
-// i = 0;
-// while (solver.queue.length !== 0 && i++ < 10000) {
-//   solver.queue.shift()!();
-// }
-// i = 0;
-// while (solver.queue.length !== 0 && i++ < 10000) {
-//   solver.queue.shift()!();
-// }
-// i = 0;
-// while (solver.queue.length !== 0 && i++ < 10000) {
-//   solver.queue.shift()!();
-// }
-// i = 0;
-// while (solver.queue.length !== 0 && i++ < 10000) {
-//   solver.queue.shift()!();
-// }
-// i = 0;
-// while (solver.queue.length !== 0 && i++ < 10000) {
-//   solver.queue.shift()!();
-// }
-// i = 0;
-// while (solver.queue.length !== 0 && i++ < 10000) {
-//   solver.queue.shift()!();
-// }
 
 const rootElement = document.getElementById('root');
 

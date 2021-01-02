@@ -1,14 +1,14 @@
-import { Cell } from './cell';
-import { createSArray, SArray, Index, VectorType, Input } from './helpers';
+import { SArray, createSArray, Index, VectorType, Input } from './helpers';
 import { Vector } from './vector';
+import { Cell } from './cell';
 
 export class Solver {
   readonly rows: SArray<Vector> = this.createRows();
-  readonly boxes: SArray<Vector> = this.createColsFromRows(this.rows);
   readonly cols: SArray<Vector> = this.createBoxesFromRows(this.rows);
+  readonly boxes: SArray<Vector> = this.createColsFromRows(this.rows);
 
   // todo: queues & types for them
-  queue: Array<() => void> = [];
+  readonly queue: Array<() => void> = [];
 
   // todo: thermos, arrows, sandwiches, etc.
   // todo: doubles, triples, quadruples, quintuples, sextuples, etc.
