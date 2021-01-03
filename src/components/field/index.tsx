@@ -1,84 +1,50 @@
-import React, {
-  ReactElement,
-  useCallback,
-  useState,
-  ChangeEventHandler,
-} from 'react';
+import React, { ReactElement, useState, Fragment } from 'react';
 
-import { Solver, VectorType, VECTOR_TYPES } from 'solver';
-import { Index, toDigit, toBoxIndex } from 'solver/helpers';
+import { indexToDigit, SArray, Solver, VectorType } from 'solver';
 
-interface FieldComponentProps {
+import { Selector, SelectorState } from 'components/selector';
+import { DigitOption } from 'components/digit-option';
+
+import './styles.css';
+
+export interface FieldComponentProps {
   solver: Solver;
 }
 
 export function FieldComponent({ solver }: FieldComponentProps): ReactElement {
-  const [currentType, setCurrentType] = useState<VectorType | 'disable'>(
-    VectorType.ROW,
-  );
-
-  const onChange = useCallback<ChangeEventHandler<HTMLSelectElement>>(
-    e => {
-      setCurrentType(e.target.value as VectorType | 'disable');
-    },
-    [setCurrentType],
-  );
+  const [type, setType] = useState<SelectorState>(VectorType.Row);
 
   return (
     <div className="layout">
-      <select value={currentType} onChange={onChange}>
-        {[...VECTOR_TYPES, 'disable'].map(type => (
-          <option key={type} value={type}>
-            {type}
-          </option>
-        ))}
-      </select>
+      <div className="layout__controls">
+        <Selector value={type} onChange={setType} />
+      </div>
       <div className="field">
-        {solver.rows.map((row, rowId) => (
-          <div key={rowId} className="field-row">
-            {row.cells.map((cell, colId) => (
-              <div key={colId} className="field-cell">
-                <>
+        {SArray.map(solver.rows, row => (
+          <div key={row.index} className="field-row">
+            {SArray.map(row.cells, cell => (
+              <div key={cell.col.index} className="field-cell">
+                <Fragment>
                   <div className="field-cell__value">{cell.value}</div>
-                  <div className="field-cell__layer field-cell__layer--center">
+                  <div className="field-cell-options field-cell__layer">
                     {cell.options.toDigitString()}
                   </div>
-                  <div className="field-cell__layer field-cell__layer--top">
-                    {currentType === VectorType.ROW
-                      ? cell.row.digits.map((digitPos, i) => {
-                          const visible = digitPos.get(colId as Index);
-
-                          return (
-                            <span key={i} className={visible ? '' : 'hidden'}>
-                              {toDigit(i as Index)}
-                            </span>
-                          );
-                        })
-                      : currentType === VectorType.COL
-                      ? cell.col.digits.map((digitPos, i) => {
-                          const visible = digitPos.get(rowId as Index);
-
-                          return (
-                            <span key={i} className={visible ? '' : 'hidden'}>
-                              {toDigit(i as Index)}
-                            </span>
-                          );
-                        })
-                      : currentType === VectorType.BOX
-                      ? cell.box.digits.map((digitPos, i) => {
-                          const visible = digitPos.get(
-                            toBoxIndex(rowId as Index, colId as Index),
-                          );
-
-                          return (
-                            <span key={i} className={visible ? '' : 'hidden'}>
-                              {toDigit(i as Index)}
-                            </span>
-                          );
-                        }) /** TODO */
+                  <div className="field-cell-digits-options field-cell__layer">
+                    {type !== 'disable'
+                      ? SArray.map(cell[type].digits, (digitPos, i) => (
+                          <DigitOption
+                            key={i}
+                            type={type}
+                            digit={indexToDigit(i)}
+                            visible={
+                              // digitPos.cardinality() < 7 &&
+                              digitPos.get(cell.indexes[type])
+                            }
+                          />
+                        ))
                       : ''}
                   </div>
-                </>
+                </Fragment>
               </div>
             ))}
           </div>

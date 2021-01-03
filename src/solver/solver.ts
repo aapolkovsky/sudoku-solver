@@ -1,87 +1,114 @@
-import { SArray, createSArray, Index, VectorType, Input } from './helpers';
+import { Index, VectorType, BOX_SIZE } from './helpers';
+import { Action } from './action';
+import { SArray } from './sarray';
 import { Vector } from './vector';
 import { Cell } from './cell';
+import { Input } from './input';
 
 export class Solver {
+  // todo: rewrite
+  static fromInput(input: Input) {
+    const solver = new Solver();
+
+    SArray.forEach(input.rows, (row, i) =>
+      SArray.forEach(row, (cell, j) => {
+        if (cell !== undefined) {
+          solver.rows[i].cells[j].setValue(cell);
+        }
+      }),
+    );
+
+    return solver;
+  }
+
   readonly rows: SArray<Vector> = this.createRows();
-  readonly cols: SArray<Vector> = this.createBoxesFromRows(this.rows);
-  readonly boxes: SArray<Vector> = this.createColsFromRows(this.rows);
+  readonly cols: SArray<Vector> = this.createColsFromRows(this.rows);
+  readonly boxes: SArray<Vector> = this.createBoxesFromRows(this.rows);
 
   // todo: queues & types for them
   readonly queue: Array<() => void> = [];
 
-  // todo: thermos, arrows, sandwiches, etc.
-  // todo: doubles, triples, quadruples, quintuples, sextuples, etc.
+  readonly _queue: Action[] = [];
+
+  dispatch(action: Action): void {
+    this._queue.push(action);
+  }
+
+  process(): void {}
+
+  // todo: thermos, arrows, sandwiches, etc
+  // todo: doubles, triples, quadruples, quintuples, sextuples, etc
 
   private createRows(): SArray<Vector> {
-    return createSArray(i => {
-      const row = new Vector(this, i, VectorType.ROW);
-      const cells = createSArray(() => new Cell(this, null));
+    return SArray.create(i => {
+      const row = new Vector(this, i, VectorType.Row);
+      const cells = SArray.create(() => new Cell(this));
 
-      cells.forEach((cell, index) => {
-        cell.row = row;
-        cell.indexes.row = index as Index;
+      SArray.forEach(cells, (cell, index) => {
+        // why-ts-as: deferred initialization
+        (cell.row as any) = row;
+
+        // why-ts-as: deferred initialization
+        (cell.indexes.row as any) = index;
       });
 
-      row.cells = cells;
+      // why-ts-as: deferred initialization
+      (row.cells as any) = cells;
 
       return row;
     });
   }
 
   private createColsFromRows(rows: SArray<Vector>): SArray<Vector> {
-    return createSArray(i => {
-      const col = new Vector(this, i, VectorType.COL);
-      const cells = rows.map(row => row.cells[i]) as SArray<Cell>;
+    return SArray.create(i => {
+      const col = new Vector(this, i, VectorType.Col);
+      const cells = SArray.map(rows, row => row.cells[i]);
 
-      cells.forEach((cell, index) => {
-        cell.col = col;
-        cell.indexes.col = index as Index;
+      SArray.forEach(cells, (cell, index) => {
+        // why-ts-as: deferred initialization
+        (cell.col as any) = col;
+
+        // why-ts-as: deferred initialization
+        (cell.indexes.col as any) = index;
       });
 
-      col.cells = cells;
+      // why-ts-as: deferred initialization
+      (col.cells as any) = cells;
 
       return col;
     });
   }
 
   private createBoxesFromRows(rows: SArray<Vector>): SArray<Vector> {
-    return createSArray(i => {
-      const boxRow = Math.floor(i / 3);
-      const boxCol = i % 3;
-      const startRow = 3 * boxRow;
-      const startCol = 3 * boxCol;
+    return SArray.create(i => {
+      const boxRow = Math.floor(i / BOX_SIZE);
+      const boxCol = i % BOX_SIZE;
+      const startRow = BOX_SIZE * boxRow;
+      const startCol = BOX_SIZE * boxCol;
 
-      const box = new Vector(this, i, VectorType.BOX);
-      const cells = createSArray(j => {
-        const cellTop = (startRow + Math.floor(j / 3)) as Index;
-        const cellLeft = (startCol + (j % 3)) as Index;
+      const box = new Vector(this, i, VectorType.Box);
+      const cells = SArray.create(j => {
+        // why-ts-as: nominal types conversion
+        const cellTop = (startRow + Math.floor(j / BOX_SIZE)) as Index;
 
-        return rows[cellTop as Index].cells[cellLeft];
+        // why-ts-as: nominal types conversion
+        const cellLeft = (startCol + (j % BOX_SIZE)) as Index;
+
+        return rows[cellTop].cells[cellLeft];
       });
 
-      cells.forEach((cell, index) => {
-        cell.box = box;
-        cell.indexes.box = index as Index;
+      SArray.forEach(cells, (cell, index) => {
+        // why-ts-as: deferred initialization
+        (cell.box as any) = box;
+
+        // why-ts-as: deferred initialization
+        (cell.indexes.box as any) = index;
       });
 
-      box.cells = cells;
+      // why-ts-as: deferred initialization
+      (box.cells as any) = cells;
 
       return box;
     });
   }
-}
-
-export function createSolverFromInput(input: Input) {
-  const solver = new Solver();
-
-  input.rows.forEach((row, i) =>
-    row.forEach((cell, j) => {
-      if (cell) {
-        solver.rows[i as Index].cells[j as Index].setValue(cell);
-      }
-    }),
-  );
-
-  return solver;
 }

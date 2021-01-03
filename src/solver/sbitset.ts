@@ -1,10 +1,12 @@
-import { SArray, createSArray, Digit, toDigit, Index, SIZE } from './helpers';
+import { Digit, Index, indexToDigit, INDEXES, FIELD_SIZE } from './helpers';
+import { SArray } from './sarray';
 
 export class SBitSet {
-  static readonly ALL: number = (1 << SIZE) - 1;
-  static readonly BITS: SArray<number> = createSArray(i => 1 << i);
-  static readonly NEG_BITS: SArray<number> = createSArray(
-    i => SBitSet.ALL - (1 << i),
+  static readonly ALL: number = (1 << FIELD_SIZE) - 1;
+  static readonly BITS: SArray<number> = SArray.create(i => 1 << i);
+  static readonly NEG_BITS: SArray<number> = SArray.map(
+    SBitSet.BITS,
+    bit => SBitSet.ALL - bit,
   );
 
   constructor(public bits: number) {}
@@ -29,36 +31,35 @@ export class SBitSet {
     return this.bits === 0;
   }
 
+  // https://stackoverflow.com/questions/43122082/efficiently-count-the-number-of-bits-in-an-integer-in-javascript
   cardinality(): number {
     if (this.empty()) {
       return 0;
     }
 
-    let result = 0;
+    let n = this.bits;
 
-    // ts-as: nominal types conversion
-    for (let i: Index = 0; i < SIZE; i = (i + 1) as Index) {
-      if (this.bits & SBitSet.BITS[i]) {
-        result += 1;
-      }
-    }
+    n = n - ((n >> 1) & 0x55555555);
+    n = (n & 0x33333333) + ((n >> 2) & 0x33333333);
 
-    return result;
+    return (((n + (n >> 4)) & 0xf0f0f0f) * 0x1010101) >> 24;
   }
 
-  lsb(): Index | null {
+  // https://www.geeksforgeeks.org/position-of-rightmost-set-bit/
+  lsb(): Index | undefined {
     if (this.empty()) {
-      return null;
+      return undefined;
     }
 
-    // ts-as: nominal types conversion
-    for (let i: Index = 0; i < SIZE; i = (i + 1) as Index) {
-      if (this.bits & SBitSet.BITS[i]) {
-        return i;
-      }
-    }
+    let bit = this.bits & -this.bits;
+    let lsb = 0;
 
-    return null;
+    // why-eslint-disable: optimization
+    // eslint-disable-next-line no-cond-assign
+    for (; (bit >>>= 1); lsb += 1) {}
+
+    // why-ts-as: due to optimization
+    return lsb as Index;
   }
 
   toDigitArray(): Digit[] {
@@ -68,12 +69,11 @@ export class SBitSet {
 
     const result: Digit[] = [];
 
-    // ts-as: nominal types conversion
-    for (let i: Index = 0; i < SIZE; i = (i + 1) as Index) {
+    SArray.forEach(INDEXES, i => {
       if (this.bits & SBitSet.BITS[i]) {
-        result.push(toDigit(i));
+        result.push(indexToDigit(i));
       }
-    }
+    });
 
     return result;
   }

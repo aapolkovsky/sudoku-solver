@@ -1,0 +1,21 @@
+.digit-option {
+  display: inline-block;
+  color: white;
+  border-right: 1px solid white;
+}
+
+.digit-option--hidden {
+  visibility: hidden;
+}
+
+.digit-option--type_row {
+  background: red;
+}
+
+.digit-option--type_box {
+  background: blue;
+}
+
+.digit-option--type_col {
+  background: green;
+}

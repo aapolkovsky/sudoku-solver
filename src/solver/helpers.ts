@@ -1,71 +1,56 @@
-// ---------------------------
-// Model types
-// ---------------------------
+import { SArray } from './sarray';
 
-const SIZE = 9;
+export const FIELD_SIZE = 9;
 
 export type Digit = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-export type MaybeDigit = Digit | null;
+export type MaybeDigit = Digit | undefined;
 
 export type Index = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
-export type SArray<T> = readonly [T, T, T, T, T, T, T, T, T];
-
-export function createSArray<T>(factory: (index: Index) => T): SArray<T> {
-  const arr = new Array<T>(SIZE);
-
-  for (let i = 0; i < SIZE; i += 1) {
-    arr[i] = factory(i as Index);
-  }
-
-  // ts-as: [T, T] !== readonly T[]
-  return (arr as unknown) as SArray<T>;
-}
+export const BOX_SIZE = 3;
 
 export enum VectorType {
-  BOX = 'box',
-  COL = 'col',
-  ROW = 'row',
+  Box = 'box',
+  Col = 'col',
+  Row = 'row',
 }
 
 export const VECTOR_TYPES = [
-  VectorType.BOX,
-  VectorType.COL,
-  VectorType.ROW,
+  VectorType.Box,
+  VectorType.Col,
+  VectorType.Row,
 ] as const;
 
+export const OTHER_TYPES_MAP = {
+  [VectorType.Box]: [VectorType.Col, VectorType.Row],
+  [VectorType.Col]: [VectorType.Box, VectorType.Row],
+  [VectorType.Row]: [VectorType.Box, VectorType.Col],
+} as const;
+
 export interface CellIds {
-  [VectorType.BOX]: Index;
-  [VectorType.COL]: Index;
-  [VectorType.ROW]: Index;
+  readonly [VectorType.Box]: Index;
+  readonly [VectorType.Col]: Index;
+  readonly [VectorType.Row]: Index;
 }
 
-export function toDigit(index: Index): Digit {
-  // ts-as: nominal types conversion
+export function indexToDigit(index: Index): Digit {
+  // why-ts-as: nominal types conversion
   return (index + 1) as Digit;
 }
 
-export function toIndex(digit: Digit): Index {
-  // ts-as: nominal types conversion
+export function digitToIndex(digit: Digit): Index {
+  // why-ts-as: nominal types conversion
   return (digit - 1) as Index;
 }
 
-export const POSSIBLE_VALUES = createSArray(i => toDigit(i));
+export const DIGITS = SArray.create(i => indexToDigit(i));
+export const INDEXES = SArray.create(i => i);
 
-export function toBoxIndex(rowIndex: Index, colIndex: Index): Index {
-  const top = rowIndex % 3;
-  const left = colIndex % 3;
+// // todo: remove if unnecessary
+// export function toBoxIndex(rowIndex: Index, colIndex: Index): Index {
+//   const top = rowIndex % BOX_SIZE;
+//   const left = colIndex % BOX_SIZE;
 
-  // ts-as: nominal types conversion
-  return (top * 3 + left) as Index;
-}
-
-// ---------------------------
-// Input types
-// ---------------------------
-
-export interface Input {
-  rows: SArray<SArray<MaybeDigit>>;
-
-  // todo: thermos, arrows, sandwiches, etc.
-}
+//   // why-ts-as: nominal types conversion
+//   return (top * BOX_SIZE + left) as Index;
+// }

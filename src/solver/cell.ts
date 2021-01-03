@@ -1,34 +1,46 @@
-import { Digit, MaybeDigit, toIndex, CellIds } from './helpers';
+import {
+  Digit,
+  MaybeDigit,
+  digitToIndex,
+  CellIds,
+  VECTOR_TYPES,
+} from './helpers';
 import { SBitSet } from './sbitset';
 import { Vector } from './vector';
 import { Solver } from './solver';
 
 export class Cell {
   readonly options: SBitSet = new SBitSet(SBitSet.ALL);
+
+  // why-ts-as: partial initialization
   readonly indexes: CellIds = {} as CellIds;
 
-  box!: Vector;
-  col!: Vector;
-  row!: Vector;
+  // why-ts-non-null: deferred initialization
+  readonly box!: Vector;
 
-  constructor(
-    protected readonly solver: Solver,
-    protected _value: MaybeDigit,
-  ) {}
+  // why-ts-non-null: deferred initialization
+  readonly col!: Vector;
+
+  // why-ts-non-null: deferred initialization
+  readonly row!: Vector;
+
+  protected _value: MaybeDigit = undefined;
+
+  planned: boolean = false;
+
+  constructor(protected readonly solver: Solver) {}
 
   get value(): MaybeDigit {
     return this._value;
   }
 
   known(): boolean {
-    return this._value !== null;
+    return this._value !== undefined;
   }
 
-  // todo: optimize flow
+  // todo: rewrite
   setValue(value: Digit): void {
-    // todo: optimize flow
     if (this._value === value) {
-      console.log('!!! Allready set');
       return;
     }
 
@@ -36,17 +48,15 @@ export class Cell {
 
     this.options.clearAll();
 
-    [this.box, this.col, this.row].forEach(vec => {
-      vec.digits[toIndex(value)].clearAll();
+    VECTOR_TYPES.forEach(type => {
+      this[type].digits[digitToIndex(value)].clearAll();
     });
 
-    [this.box, this.col, this.row].forEach(e => {
-      this.solver.queue.push(() => {
-        e.onSetValue(this);
-      });
+    VECTOR_TYPES.forEach(type => {
+      this[type].onSetValue(this);
     });
   }
 
-  // todo: thermos, arrows, sandwiches, etc.
-  // todo: doubles, triples, quadruples, quintuples, sextuples, etc.
+  // todo: thermos, arrows, sandwiches, etc
+  // todo: doubles, triples, quadruples, quintuples, sextuples, etc
 }

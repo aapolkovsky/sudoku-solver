@@ -2,13 +2,14 @@ import React from 'react';
 import { render } from 'react-dom';
 
 import { FieldComponent } from 'components/field';
-import { Input, createSolverFromInput, SArray, MaybeDigit } from 'solver';
+import { Input, Solver, SArray, MaybeDigit } from 'solver';
 
 import './styles.css';
 
-const _ = null;
+const _ = undefined;
 
-const testRows = [
+// why-ts-as: nominal types conversion
+const testRows1 = [
   [1, _, _, /**/ _, 7, _, /**/ _, 3, _],
   [8, 3, _, /**/ 6, _, _, /**/ _, _, _],
   [_, _, 2, /**/ 9, _, _, /**/ 6, _, 8],
@@ -22,20 +23,44 @@ const testRows = [
   [_, 4, _, /**/ _, 8, _, /**/ _, _, 9],
 ] as SArray<SArray<MaybeDigit>>;
 
+// why-ts-as: nominal types conversion
+const testRows = [
+  [5, _, _, /**/ 2, _, _, /**/ _, 4, _],
+  [_, _, _, /**/ 6, _, 3, /**/ _, _, _],
+  [_, 3, _, /**/ _, _, 9, /**/ _, _, 7],
+  /* -------------------------------- */
+  [_, _, 3, /**/ _, _, 7, /**/ _, _, _],
+  [_, _, 7, /**/ _, _, 8, /**/ _, _, _],
+  [6, _, _, /**/ _, _, _, /**/ _, 2, _],
+  /* -------------------------------- */
+  [_, 8, _, /**/ _, _, _, /**/ _, _, 3],
+  [_, _, _, /**/ 4, _, _, /**/ 6, _, _],
+  [_, _, _, /**/ 1, _, _, /**/ 5, _, _],
+] as SArray<SArray<MaybeDigit>>;
+
 const testField: Input = {
   rows: testRows,
 };
 
-const solver = ((window as any).solver = createSolverFromInput(testField));
-
-let i = 0;
-
-while (solver.queue.length !== 0 && i++ < 10000) {
-  solver.queue.shift()!();
-}
-
-console.log(i);
+// why-ts-as: debug
+const solver = ((window as any).solver = Solver.fromInput(testField));
 
 const rootElement = document.getElementById('root');
 
-render(<FieldComponent solver={solver} />, rootElement);
+let i = 0;
+
+const timeout = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+(async () => {
+  do {
+    render(<FieldComponent solver={solver} />, rootElement);
+    await timeout(4000);
+
+    solver.queue.shift()?.();
+    i += 1;
+  } while (solver.queue.length !== 0);
+
+  console.log(i);
+
+  render(<FieldComponent solver={solver} />, rootElement);
+})();
